@@ -19,6 +19,7 @@ pub fn build(b: *std.Build) void {
     });
     lib.installHeadersDirectory(b.path("src/include/"), "", .{});
     const lib_install_artifact = b.addInstallArtifact(lib, .{});
+    b.getInstallStep().dependOn(&lib_install_artifact.step);
 
     const mod_tests = b.addTest(.{
         .root_module = mod,
