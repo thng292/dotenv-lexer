@@ -1,0 +1,14 @@
+.{
+    .name = .dotenv_lexer,
+    .version = "0.0.1",
+    .fingerprint = 0x61a3d432f5bbc492,
+    .minimum_zig_version = "0.15.2",
+    .dependencies = .{},
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+        "LICENSE",
+        "README.md",
+    },
+}
