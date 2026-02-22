@@ -3,7 +3,6 @@ const std = @import("std");
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
-    const dynamic = b.option(bool, "dynamic", "Build this library as a dynamic lib.") orelse false;
 
     const mod = b.addModule("dotenv_parser", .{
         .root_source_file = b.path("src/root.zig"),
@@ -15,11 +14,23 @@ pub fn build(b: *std.Build) void {
         .name = "dotenv-parser",
         .root_module = mod,
         .use_llvm = true,
-        .linkage = if (dynamic) .dynamic else .static,
+        .linkage = .static,
     });
     lib.installHeadersDirectory(b.path("src/include/"), "", .{});
     const lib_install_artifact = b.addInstallArtifact(lib, .{});
     b.getInstallStep().dependOn(&lib_install_artifact.step);
+
+    if (target.result.cpu.arch != .wasm32 //
+    and target.result.cpu.arch != .wasm64 //
+    and target.result.os.tag != .freestanding) {
+        const lib_dyn = b.addLibrary(.{
+            .name = "dotenv-parser",
+            .root_module = mod,
+            .use_llvm = true,
+            .linkage = .dynamic,
+        });
+        b.installArtifact(lib_dyn);
+    }
 
     const mod_tests = b.addTest(.{
         .root_module = mod,

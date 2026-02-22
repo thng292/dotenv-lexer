@@ -40,22 +40,16 @@ jobs:
             "aarch64-macos"
             "x86_64-freebsd"
             "aarch64-linux-android"
-            "wasm32-wasi"
+            "wasm32-freestanding"
+            "wasm64-freestanding"
           )
 
           for target in "${TARGETS[@]}"; do
             echo "Building for $target..."
             
-            # 1. Build Static Library
-            zig build -Dtarget=$target --prefix "dist/$target-static"
-            
-            # 2. Build Dynamic Library
-            if [[ $target != *"wasi"* ]]; then
-              zig build -Dtarget=$target -Ddynamic --prefix "dist/$target-dynamic"
-            fi
-            
-            # Package the results for this specific target
-            tar -czf "$target-build.tar.gz" -C "dist" "$target-static" "$target-dynamic"
+            zig build -Doptimize=ReleaseSafe -Dtarget=$target --prefix "dist/$target"
+           
+            tar -czf "$target-build.tar.gz" -C "dist" "$target"
           done
 
       - name: Upload Release Assets
