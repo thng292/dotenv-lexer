@@ -1,0 +1,67 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  release:
+    types: [published]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Zig
+        uses: mlugg/setup-zig@v1
+        with:
+          zig-version: 0.13.0 # Or your preferred version
+
+      - name: Run Tests
+        run: zig build test
+
+      - name: Cross-Platform Build (Releases Only)
+        if: github.event_name == 'release'
+        run: |
+          # Target List: Arch-OS-ABI
+          # gnu: standard Linux, windows, macos
+          # musl: static Linux (portable)
+          # wasi: WebAssembly
+          TARGETS=(
+            "x86_64-linux"
+            "aarch64-linux"
+            "riscv64-linux"
+            "x86_64-windows"
+            "aarch64-windows"
+            "x86_64-macos"
+            "aarch64-macos"
+            "x86_64-freebsd"
+            "aarch64-linux-android"
+            "wasm32-wasi"
+          )
+
+          for target in "${TARGETS[@]}"; do
+            echo "Building for $target..."
+            
+            # 1. Build Static Library
+            zig build -Dtarget=$target --prefix "dist/$target-static"
+            
+            # 2. Build Dynamic Library
+            if [[ $target != *"wasi"* ]]; then
+              zig build -Dtarget=$target -Ddynamic --prefix "dist/$target/dynamic"
+            fi
+            
+            # Package the results for this specific target
+            tar -czf "$target-build.tar.gz" -C "dist" "$target-static" "$target-dynamic"
+          done
+
+      - name: Upload Release Assets
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: "*-build.tar.gz"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
