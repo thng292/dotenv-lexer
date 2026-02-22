@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Zig
         uses: mlugg/setup-zig@v2
@@ -51,7 +51,7 @@ jobs:
             
             # 2. Build Dynamic Library
             if [[ $target != *"wasi"* ]]; then
-              zig build -Dtarget=$target -Ddynamic --prefix "dist/$target/dynamic"
+              zig build -Dtarget=$target -Ddynamic --prefix "dist/$target-dynamic"
             fi
             
             # Package the results for this specific target
